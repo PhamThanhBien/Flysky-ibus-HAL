@@ -1,0 +1,75 @@
+/*
+ * MPU6050.c
+ *
+ *  Created on: May 7, 2025
+ *      Author: PhamThanhBien
+ */
+#include "MPU6050.h"
+#include <math.h>
+
+static HAL_StatusTypeDef MPU6050_WriteByte(I2C_HandleTypeDef *hi2c1, uint8_t reg, uint8_t data) {
+    return HAL_I2C_Mem_Write(hi2c1, MPU6050_ADDR, reg, 1, &data, 1, HAL_MAX_DELAY);
+}
+
+static HAL_StatusTypeDef MPU6050_ReadBytes(I2C_HandleTypeDef *hi2c1, uint8_t reg, uint8_t *buffer, uint8_t len) {
+    return HAL_I2C_Mem_Read(hi2c1, MPU6050_ADDR, reg, 1, buffer, len, HAL_MAX_DELAY);
+}
+
+HAL_StatusTypeDef MPU6050_Init(MPU6050_t *mpu, I2C_HandleTypeDef *hi2c1, float accCoef, float gyroCoef) {
+    mpu->hi2c1 = hi2c1;
+    mpu->accCoef = accCoef;
+    mpu->gyroCoef = gyroCoef;
+
+    if (MPU6050_WriteByte(hi2c1, MPU6050_PWR_MGMT_1, 0x00) != HAL_OK) return HAL_ERROR;
+    if (MPU6050_WriteByte(hi2c1, MPU6050_SMPLRT_DIV, 0x07) != HAL_OK) return HAL_ERROR;
+    if (MPU6050_WriteByte(hi2c1, MPU6050_CONFIG, 0x00) != HAL_OK) return HAL_ERROR;
+    if (MPU6050_WriteByte(hi2c1, MPU6050_GYRO_CONFIG, 0x00) != HAL_OK) return HAL_ERROR;
+    if (MPU6050_WriteByte(hi2c1, MPU6050_ACCEL_CONFIG, 0x00) != HAL_OK) return HAL_ERROR;
+
+    return HAL_OK;
+}
+
+HAL_StatusTypeDef MPU6050_ReadAll(MPU6050_t *mpu) {
+    uint8_t data[14];
+    if (MPU6050_ReadBytes(mpu->hi2c1, MPU6050_ACCEL_XOUT_H, data, 14) != HAL_OK) {
+        return HAL_ERROR;
+    }
+
+    mpu->rawAccX = (int16_t)(data[0] << 8 | data[1]);
+    mpu->rawAccY = (int16_t)(data[2] << 8 | data[3]);
+    mpu->rawAccZ = (int16_t)(data[4] << 8 | data[5]);
+    mpu->rawTemp = (int16_t)(data[6] << 8 | data[7]);
+    mpu->rawGyroX = (int16_t)(data[8] << 8 | data[9]);
+    mpu->rawGyroY = (int16_t)(data[10] << 8 | data[11]);
+    mpu->rawGyroZ = (int16_t)(data[12] << 8 | data[13]);
+
+    mpu->accX = mpu->rawAccX / 16384.0f;
+    mpu->accY = mpu->rawAccY / 16384.0f;
+    mpu->accZ = mpu->rawAccZ / 16384.0f;
+
+    mpu->temp = mpu->rawTemp / 340.0f + 36.53f;
+
+    mpu->gyroX = (mpu->rawGyroX - mpu->gyroXoffset) / 131.0f;
+    mpu->gyroY = (mpu->rawGyroY - mpu->gyroYoffset) / 131.0f;
+    mpu->gyroZ = (mpu->rawGyroZ - mpu->gyroZoffset) / 131.0f;
+
+    return HAL_OK;
+}
+
+void MPU6050_ComputeAngles(MPU6050_t *mpu, float dt) {
+    // Tính góc từ gia tốc kế
+    mpu->angleAccX = atan2f(mpu->accY, sqrtf(mpu->accX * mpu->accX + mpu->accZ * mpu->accZ)) * 180 / M_PI;
+    mpu->angleAccY = atan2f(-mpu->accX, sqrtf(mpu->accY * mpu->accY + mpu->accZ * mpu->accZ)) * 180 / M_PI;
+
+    // Tích phân gyro
+    mpu->angleGyroX += mpu->gyroX * dt;
+    mpu->angleGyroY += mpu->gyroY * dt;
+    mpu->angleGyroZ += mpu->gyroZ * dt;
+
+    // Bộ lọc kết hợp
+    mpu->angleX = mpu->gyroCoef * (mpu->angleX + mpu->gyroX * dt) + mpu->accCoef * mpu->angleAccX;
+    mpu->angleY = mpu->gyroCoef * (mpu->angleY + mpu->gyroY * dt) + mpu->accCoef * mpu->angleAccY;
+    mpu->angleZ += mpu->gyroZ * dt;
+}
+
+

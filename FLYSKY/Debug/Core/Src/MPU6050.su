@@ -1,0 +1,4 @@
+../Core/Src/MPU6050.c:15:6:MPUcheck	8	static
+../Core/Src/MPU6050.c:25:6:MPU6050Init	32	static
+../Core/Src/MPU6050.c:43:6:MPU6050_read_gyro	32	static
+../Core/Src/MPU6050.c:52:6:MPU6050_read_acc	32	static

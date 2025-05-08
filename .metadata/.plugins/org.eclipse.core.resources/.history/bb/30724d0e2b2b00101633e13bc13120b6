@@ -1,0 +1,54 @@
+/*
+ * MPU6050.h
+ *
+ *  Created on: May 7, 2025
+ *      Author: PhamThanhBien
+ */
+#ifndef __MPU6050_H
+#define __MPU6050_H
+#ifdef __cplusplus
+	extern "C"	{
+#endif
+
+#include "main.h"
+#include "stdint.h"
+#include "stm32f4xx_hal.h"
+
+#define MPU6050_ADDR 				0xD0
+#define MPU6050_SMPLRT_DIV   		0x19
+#define MPU6050_CONFIG       		0x1A
+#define MPU6050_GYRO_CONFIG  		0x1B
+#define MPU6050_ACCEL_CONFIG 		0x1C
+#define MPU6050_PWR_MGMT_1   		0x6B
+#define MPU6050_TEMP_H       		0x41
+#define MPU6050_ACCEL_XOUT_H		0x3B
+
+typedef struct {
+	    I2C_HandleTypeDef *hi2c1;
+
+	    int16_t rawAccX, rawAccY, rawAccZ;
+	    int16_t rawTemp;
+	    int16_t rawGyroX, rawGyroY, rawGyroZ;
+
+	    float accX, accY, accZ;
+	    float gyroX, gyroY, gyroZ;
+	    float temp;
+
+	    float gyroXoffset, gyroYoffset, gyroZoffset;
+
+	    float angleGyroX, angleGyroY, angleGyroZ;
+	    float angleAccX, angleAccY;
+	    float angleX, angleY, angleZ;
+
+	    float accCoef, gyroCoef;
+	} MPU6050_t;
+
+	HAL_StatusTypeDef MPU6050_Init(MPU6050_t *mpu, I2C_HandleTypeDef *hi2c1, float accCoef, float gyroCoef);
+	HAL_StatusTypeDef MPU6050_ReadAll(MPU6050_t *mpu);
+	void MPU6050_ComputeAngles(MPU6050_t *mpu, float dt);
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+

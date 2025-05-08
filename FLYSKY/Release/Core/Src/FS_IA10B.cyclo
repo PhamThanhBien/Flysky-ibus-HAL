@@ -1,0 +1,4 @@
+../Core/Src/FS_IA10B.c:12:15:ibus_check_CS	3
+../Core/Src/FS_IA10B.c:25:6:ibus_message	1
+../Core/Src/FS_IA10B.c:39:15:ibus_active_failsafe	1
+../Core/Src/FS_IA10B.c:44:6:FS_IA10B_USART1_initialization	1
