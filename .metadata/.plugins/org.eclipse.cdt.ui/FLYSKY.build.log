@@ -1,0 +1,10 @@
+18:01:24 **** Incremental Build of configuration Debug for project FLYSKY ****
+make -j16 all 
+arm-none-eabi-size  FLYSKY.elf 
+   text	   data	    bss	    dec	    hex	filename
+  40524	    472	   2296	  43292	   a91c	FLYSKY.elf
+Finished building: default.size.stdout
+ 
+
+18:01:24 Build Finished. 0 errors, 0 warnings. (took 375ms)
+
